@@ -2,6 +2,7 @@ import express, { response } from "express";
 import User from "../modules/user.mjs";
 import { HTTPCodes } from "../modules/httpConstants.mjs";
 import hashPassword from "../modules/passwordHasher.mjs";
+import client from '../postgresql.mjs';
 
 
 
@@ -24,7 +25,7 @@ USER_API.use(async (req, res, next) => {
     const { password } = req.body;
     if (password) {
         try {
-            req.body.pswhash = await hashPassword(password);
+            req.body.pswHash = await hashPassword(password);
             next();
         } catch (error) {
             console.error('Error hashing password:' , error);
@@ -34,29 +35,23 @@ USER_API.use(async (req, res, next) => {
     }
 });
 
-USER_API.post('/', (req, res) => {
-    
+USER_API.post('/', async (req, res) => {
     const { name, email, pswHash } = req.body;
-    if (name && email && pswHash) {
 
-        const exists = users.some(user => user.email === email);
-            if (!exists) {
-
-                const user = new User();
-                user.name = name;
-                user.email = email; 
-                user.pswHash = pswHash;
-
-                users.push(user);
-
-                res.status(HTTPCodes.SuccesfullRespons.Ok).json({ message: 'User registered succefully' });
-            } else {
-                res.status(HTTPCodes.ClientSideErrorRespons.BadRequest).json({ error: 'User already exists' });
-            }
-    } else {
-        res.status(HTTPCodes.ClientSideErrorRespons.BadRequest).json({ error: 'missing data fields' });
+    try {
+        const existsQuery = 'SELECT * FROM users WHERE email = $1';
+        const existsResult = await client.query(existsQuery, [email]);
+        if (existsResult.rows.length === 0) {
+            const insertQuery = 'INSERT INTO users (name, email, password) VALUES ($1, $2, $3)';
+            await client.query(insertQuery, [name, email, pswHash]);
+            res.status(HTTPCodes.SuccesfullRespons.Ok).json({ message: 'User registered successfully' });
+        } else {
+            res.status(HTTPCodes.ClientSideErrorRespons.BadRequest).json({ error: 'User already exists' });
+        }
+    } catch (error) {
+        console.error('Error creating user:', error);
+        res.status(500).json({ error: 'Internal server error' });
     }
-
 });
 
 USER_API.get("/:id", (req, res) => {

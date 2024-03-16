@@ -7,7 +7,6 @@
     <title>My app</title>
 </head>
 
-
 <body>
 
     <div>
@@ -18,42 +17,39 @@
     </div>
 
     <script>
-
-
-
-
         const createUserButton = document.getElementById("createUserButton");
 
         createUserButton.onclick = async function (e) {
-
             const name = document.getElementById("name").value;
             const email = document.getElementById("email").value;
             const password = document.getElementById("password").value;
 
             const user = { name, email, password };
 
-            const respon = await postTo("/user", user);
-
-
-
-
+            const response = await postTo("/users", user);
+            if (response.ok) {
+                alert("User registered successfully!");
+            } else {
+                const errorMessage = await response.text();
+                alert(errorMessage || "An error occurred while registering the user.");
+            }
         }
-
 
         async function postTo(url, data) {
-            const header = {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(data),
-            };
-
-
-            const respon = await fetch(url, header);
-            return respon;
+            try {
+                const response = await fetch(url, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(data)
+                });
+                return response;
+            } catch (error) {
+                console.error("Error:", error);
+                throw new Error("Failed to fetch data from the server.");
+            }
         }
-
     </script>
 
 </body>
