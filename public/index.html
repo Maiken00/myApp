@@ -9,15 +9,25 @@
 
 <body>
 
+   
     <div>
-        Name : <input type="text" id="name"><br>
+        <h2>Register</h2>
+        Name: <input type="text" id="name"><br>
         Email: <input type="email" id="email"><br />
         Password: <input type="password" id="password"><br />
-        <button id="createUserButton">Create User</button>
+        <button id="createUserButton" class="btn btn-primary">Create User</button>
+    </div>
+
+    <div>
+        <h2>Log in</h2>
+        Email: <input type="email" id="loginEmail"><br />
+        Password: <input type="password" id="loginPassword"><br />
+        <button id="loginButton" class="btn btn-primary">Login</button>
     </div>
 
     <script>
         const createUserButton = document.getElementById("createUserButton");
+        const loginButton = document.getElementById("loginButton");
 
         createUserButton.onclick = async function (e) {
             const name = document.getElementById("name").value;
@@ -32,6 +42,22 @@
             } else {
                 const errorMessage = await response.text();
                 alert(errorMessage || "An error occurred while registering the user.");
+            }
+        }
+
+        loginButton.onclick = async function (e) {
+            const email = document.getElementById("loginEmail").value;
+            const password = document.getElementById("loginPassword").value;
+
+            const user = { email, password };
+
+            const response = await postTo("/login", user);
+            if (response.ok) {
+                alert("Login successful!");
+                window.location.href = "/todo"; // Redirect to the "/posts" route
+            } else {
+                const errorMessage = await response.text();
+                alert(errorMessage || "An error occurred while logging in.");
             }
         }
 
